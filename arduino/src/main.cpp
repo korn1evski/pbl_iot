@@ -14,17 +14,6 @@
 #define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// ------------------ WiFi Credentials ------------------
-const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
-
-// ------------------ Server ------------------
-const char* serverIP = SERVER_IP;
-const char* serverPort = SERVER_PORT;
-const char* room = ESP_READER_CLASSROOM;
-
-
-// ------------------ Show message on OLED ------------------
 void showMessage(String message) {
   display.clearDisplay();
   display.setTextSize(1);
@@ -34,11 +23,10 @@ void showMessage(String message) {
   display.display();
 }
 
-// ------------------ HTTP Send Function ------------------
 void sendToServer(String uid, String room) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin("http://" + String(serverIP) + ":" + String(serverPort) + "/api/health");
+    http.begin(SERVER_URL);
     int httpResponseCode = http.GET();
     if (httpResponseCode>0) {
         Serial.print("HTTP Response code: ");
@@ -50,27 +38,27 @@ void sendToServer(String uid, String room) {
         Serial.print("Error code: ");
         Serial.println(httpResponseCode);
       }
-      // Free resources
       http.end();
     
-      http.begin("http://" + String(serverIP) + ":" + String(serverPort) + "/api/attendances/check");
+      http.begin(SERVER_URL);
 
-    String payload = "{\"rfid_card_id\":\"" + uid + "\",\"room\":\"" + room + "\"}";
-    httpResponseCode = http.POST(payload);
+      String payload = "{\"rfid_card_id\":\"" + uid + "\",\"room\":\"" + room + "\"}";
+      httpResponseCode = http.POST(payload);
 
-    if (httpResponseCode == 200) {
-      String response = http.getString();
+      if (httpResponseCode == 200) {
+        String response = http.getString();
 
-      // Basic JSON response parsing
-      int start = response.indexOf(":\"") + 2;
-      int end = response.indexOf("\"", start);
-      String message = response.substring(start, end);
-      showMessage(message);
-    } else {
-      showMessage("Server error");
-    }
+        int start = response.indexOf(":\"") + 2;
+        int end = response.indexOf("\"", start);
+        String message = response.substring(start, end);
 
-    http.end();
+        showMessage(message);
+      } else {
+        showMessage("Server error");
+      }
+
+      http.end();
+
   } else {
     showMessage("WiFi failed");
   }
@@ -82,7 +70,6 @@ void setup() {
   initGlobalStore();
   RFID rfid = *getRFID();
 
-  // Init SPI *BEFORE* RFID
   rfid.begin();
   Serial.println("RFID ready");
 
@@ -96,7 +83,7 @@ void setup() {
   showMessage("Connecting WiFi...");
 
   // Connect to WiFi
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -113,11 +100,10 @@ void loop() {
     return;
   }
 
-  // Read UID
   String uid = rfid.getUID();
   uid.toUpperCase();
 
-  sendToServer(uid, room);
+  sendToServer(uid, ESP_READER_CLASSROOM);
 
   delay(2000);
   showMessage("Scan your card...");
