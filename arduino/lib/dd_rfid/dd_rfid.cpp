@@ -2,13 +2,12 @@
 #include <SPI.h>
 #include "dd_rfid.h"
 
-RFID::RFID(int ssPin, int rstPin, int sdaPin, int sckPin, int mosiPin, int misoPin, int irqPin) {
-    this->sdaPin = sdaPin;
+RFID::RFID(int ssPin, int rstPin, int sckPin, int mosiPin, int misoPin, int irqPin) {
+    this->ssPin = ssPin;
     this->sckPin = sckPin;
     this->mosiPin = mosiPin;
     this->misoPin = misoPin;
     this->irqPin = irqPin;
-    this->ssPin = ssPin;
     this->rstPin = rstPin;
     rfid_module = new MFRC522(ssPin, rstPin);
 }
