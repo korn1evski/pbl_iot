@@ -1,10 +1,11 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <MFRC522.h>
 #include <Wire.h>
-#include <SPI.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
+#include "env.h"
+#include "config.h"
+#include "dd_rfid.h"
 
 // ------------------ OLED Setup ------------------
 #define SCREEN_WIDTH 128
@@ -13,17 +14,17 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // ------------------ WiFi Credentials ------------------
-const char* ssid = "StarNet - gusev.67";
-const char* password = "48575443FC4635A4";
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 // ------------------ Server ------------------
-const char* serverIP = "192.168.100.38"; // Replace with your MacBook's IP
-const char* serverPort = "8000"; // Replace with your server port
-const char* room = "101"; // Static value for now
+const char* serverIP = SERVER_IP;
+const char* serverPort = SERVER_PORT;
+const char* room = ESP_READER_CLASSROOM;
+
 // ------------------ RFID ------------------
-#define RST_PIN 4
-#define SS_PIN  5
-MFRC522 rfid(SS_PIN, RST_PIN);
+
+RFID rfid(RFID_SS_PIN, RFID_RST_PIN, RFID_SDA_PIN, RFID_SCK_PIN, RFID_MOSI_PIN, RFID_MISO_PIN, RFID_IRQ_PIN);
 
 // ------------------ Show message on OLED ------------------
 void showMessage(String message) {
@@ -40,7 +41,6 @@ void sendToServer(String uid, String room) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin("http://" + String(serverIP) + ":" + String(serverPort) + "/api/health");
-    // http.addHeader("Content-Type", "application/json");
     int httpResponseCode = http.GET();
     if (httpResponseCode>0) {
         Serial.print("HTTP Response code: ");
@@ -83,8 +83,7 @@ void setup() {
   Serial.begin(115200);
 
   // Init SPI *BEFORE* RFID
-  SPI.begin();             // SCK=18, MISO=19, MOSI=23 by default
-  rfid.PCD_Init();         // Initialize RC522 reader
+  rfid.begin();
   Serial.println("RFID ready");
 
   // Init OLED
@@ -108,25 +107,19 @@ void setup() {
 
 // ------------------ Loop ------------------
 void loop() {
-  if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
+  if (!rfid.isCardPresent() || !rfid.readCard()) {
     delay(100);
     return;
   }
 
   // Read UID
-  String uid = "";
-  for (byte i = 0; i < rfid.uid.size; i++) {
-    uid += String(rfid.uid.uidByte[i], HEX);
-  }
+  String uid = rfid.getUID();
   uid.toUpperCase();
-
-  // Static values for now (can replace later)
 
   sendToServer(uid, room);
 
   delay(2000);
   showMessage("Scan your card...");
 
-  rfid.PICC_HaltA();
-  rfid.PCD_StopCrypto1();
+  rfid.stopCrypto1();
 }
