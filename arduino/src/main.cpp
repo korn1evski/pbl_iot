@@ -24,7 +24,7 @@ const char* room = ESP_READER_CLASSROOM;
 
 // ------------------ RFID ------------------
 
-RFID rfid(RFID_SS_PIN, RFID_RST_PIN, RFID_SDA_PIN, RFID_SCK_PIN, RFID_MOSI_PIN, RFID_MISO_PIN, RFID_IRQ_PIN);
+RFID rfid(RFID_SS_PIN, RFID_RST_PIN, RFID_SCK_PIN, RFID_MOSI_PIN, RFID_MISO_PIN, RFID_IRQ_PIN);
 
 // ------------------ Show message on OLED ------------------
 void showMessage(String message) {

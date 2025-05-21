@@ -3,7 +3,7 @@
 
 #define ESP_READER_CLASSROOM "101"
 
-#define RFID_SDA_PIN 16
+#define RFID_SS_PIN 16
 #define RFID_SCK_PIN 17
 #define RFID_MOSI_PIN 18
 #define RFID_MISO_PIN 19
