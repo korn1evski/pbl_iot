@@ -1,75 +1,50 @@
+## Description
+This is the repository that hosts the code for PBL IoT Project - Student Attendance Management System.
+
+## Hardware
+### Components
+1. ESP32
+2. RFID RC522 (Reader) + RFID Tag/Card
+3. OLED Display 0.96″
+4. Jumper Wires
+5. Breadboard
+
+### Circuit
+<img src="README_Images/reader.png">
+
 ## 🛠 Getting Started
+### Prerequisites
+0. Setup `PlatformIO` extension for VSCode [PlatformIO Extension Installation Tutorial](https://platformio.org/install/ide?install=vscode) or use official IDE - (PlatformIO Core and IDE Installation Tutorial)[https://platformio.org/install].
 
-### 1. Initialize the Database
+1. Create `config.h` file inside `include` folder, that will serve as a storage for sensitive variables. It should follow the structure:
+```C
+#ifndef ENV_H
+#define ENV_H
 
-Run this command to create the database with students and schedule tables:
+#define WIFI_SSID "WIFI_SSID"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+#define SERVER_IP "SERVER_IP"
+#define SERVER_PORT "SERVER_PORT"
+#define SERVER_URL "http://" + String(SERVER_IP) + ":" + String(SERVER_PORT) + "/api/attendances/check"
 
-```
-python init_db.py
-```
-
----
-
-## 🔌 USB Serial Version
-
-### 2. Set the Serial Port
-
-Find your ESP32 serial port (on macOS):
-
-```
-ls /dev/tty.*
+#endif
 ```
 
-Update the port in `listener.py`:
-
-```python
-ser = serial.Serial('/dev/tty.usbserial-0001', 115200)
+### Code Building, Uploading and Monitoring
+2. Go to `main.cpp` and use `Build` button or `Ctrl+Alt+B` shortcut in VSCode Extension or using CLI command:
+```
+pio run
 ```
 
-Replace `/dev/tty.usbserial-0001` with your actual port.
-
-### 3. Upload the Code to ESP32
-
-Use PlatformIO to upload the serial version code (e.g. `main.cpp`).
-
-### 4. Start the Listener
-
-Run the Python listener:
-
+3. Upload build code to the ESP32 using `Upload` button or `Ctrl+Alt+U` shortcut in VSCode Extension or using CLI command:
 ```
-python listener.py
+pio run --target upload
 ```
 
----
-
-## 🌐 Wi-Fi Version
-
-### 1. Set Wi-Fi Credentials
-
-In `main_wifi.cpp`, update:
-
-```cpp
-const char* ssid = "YourWiFi";
-const char* password = "YourPassword";
-const char* serverIP = "YourComputerIP"; // e.g. 192.168.0.134
+4. Open Serial Monitor using `Serial Monitor` button or `Ctrl+Alt+S` shortcut in VSCode Extension or using CLI command:
+```
+pio device monitor
 ```
 
-### 2. Set Flask Port
-
-Make sure `wifi_listener.py` uses the same port as the ESP32 expects:
-
-```python
-app.run(host='0.0.0.0', port=5001)
-```
-
-### 3. Upload Wi-Fi Code
-
-Upload `main_wifi.cpp` to your ESP32 using PlatformIO.
-
-### 4. Run the Flask Server
-
-Run the Wi-Fi listener:
-
-```
-python wifi_listener.py
-```
+### Usage
+5. Approach RFID Tag or Reader to the RFID RC522 Module and check OLED Display for instructions.
