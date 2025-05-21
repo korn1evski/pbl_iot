@@ -6,6 +6,7 @@
 #include "env.h"
 #include "config.h"
 #include "dd_rfid.h"
+#include "srv_global_store.h"
 
 // ------------------ OLED Setup ------------------
 #define SCREEN_WIDTH 128
@@ -22,9 +23,6 @@ const char* serverIP = SERVER_IP;
 const char* serverPort = SERVER_PORT;
 const char* room = ESP_READER_CLASSROOM;
 
-// ------------------ RFID ------------------
-
-RFID rfid(RFID_SS_PIN, RFID_RST_PIN, RFID_SCK_PIN, RFID_MOSI_PIN, RFID_MISO_PIN, RFID_IRQ_PIN);
 
 // ------------------ Show message on OLED ------------------
 void showMessage(String message) {
@@ -81,6 +79,8 @@ void sendToServer(String uid, String room) {
 // ------------------ Setup ------------------
 void setup() {
   Serial.begin(115200);
+  initGlobalStore();
+  RFID rfid = *getRFID();
 
   // Init SPI *BEFORE* RFID
   rfid.begin();
@@ -107,6 +107,7 @@ void setup() {
 
 // ------------------ Loop ------------------
 void loop() {
+  RFID rfid = *getRFID();
   if (!rfid.isCardPresent() || !rfid.readCard()) {
     delay(100);
     return;
