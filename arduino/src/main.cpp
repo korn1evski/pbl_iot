@@ -1,100 +1,35 @@
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <Wire.h>
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_GFX.h>
 #include "env.h"
 #include "config.h"
-#include "dd_rfid.h"
+#include "srv_wifi.h"
 #include "srv_global_store.h"
 
-// ------------------ OLED Setup ------------------
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
-void showMessage(String message) {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 20);
-  display.println(message);
-  display.display();
-}
-
-void sendToServer(String uid, String room) {
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin(SERVER_URL);
-    int httpResponseCode = http.GET();
-    if (httpResponseCode>0) {
-        Serial.print("HTTP Response code: ");
-        Serial.println(httpResponseCode);
-        String payload = http.getString();
-        Serial.println(payload);
-      }
-      else {
-        Serial.print("Error code: ");
-        Serial.println(httpResponseCode);
-      }
-      http.end();
-    
-      http.begin(SERVER_URL);
-
-      String payload = "{\"rfid_card_id\":\"" + uid + "\",\"room\":\"" + room + "\"}";
-      httpResponseCode = http.POST(payload);
-
-      if (httpResponseCode == 200) {
-        String response = http.getString();
-
-        int start = response.indexOf(":\"") + 2;
-        int end = response.indexOf("\"", start);
-        String message = response.substring(start, end);
-
-        showMessage(message);
-      } else {
-        showMessage("Server error");
-      }
-
-      http.end();
-
-  } else {
-    showMessage("WiFi failed");
-  }
-}
-
-// ------------------ Setup ------------------
 void setup() {
   Serial.begin(115200);
+  
   initGlobalStore();
+
   RFID rfid = *getRFID();
+  OLEDDisplay display = *getOLEDDisplay();
 
   rfid.begin();
   Serial.println("RFID ready");
 
-  // Init OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println("OLED failed");
-    while (true);
-  }
-  display.clearDisplay();
-  display.display();
-  showMessage("Connecting WiFi...");
+  display.begin();
+  Serial.println("OLED ready");
 
-  // Connect to WiFi
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  if (!connectToWiFi(WIFI_SSID, WIFI_PASSWORD)) {
+    display.showMessage("Retrying WiFi...");
+    delay(5000);
+    ESP.restart();
   }
-  Serial.println("\nWiFi connected");
-  showMessage("Scan your card...");
+
+  display.showMessage("Scan your card...");
 }
 
-// ------------------ Loop ------------------
 void loop() {
   RFID rfid = *getRFID();
+  OLEDDisplay display = *getOLEDDisplay();
+  
   if (!rfid.isCardPresent() || !rfid.readCard()) {
     delay(100);
     return;
@@ -106,7 +41,7 @@ void loop() {
   sendToServer(uid, ESP_READER_CLASSROOM);
 
   delay(2000);
-  showMessage("Scan your card...");
+  display.showMessage("Scan your card...");
 
   rfid.stopCrypto1();
 }

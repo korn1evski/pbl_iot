@@ -10,4 +10,8 @@
 #define RFID_IRQ_PIN -1
 #define RFID_RST_PIN 15
 
+#define OLED_SCREEN_WIDTH 128
+#define OLED_SCREEN_HEIGHT 64
+#define OLED_RESET_PIN -1
+
 #endif

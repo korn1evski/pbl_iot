@@ -1,5 +1,3 @@
-#include <Arduino.h>
-#include <SPI.h>
 #include "dd_rfid.h"
 
 RFID::RFID(int ssPin, int rstPin, int sckPin, int mosiPin, int misoPin, int irqPin) {
