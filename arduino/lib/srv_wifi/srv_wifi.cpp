@@ -39,7 +39,7 @@ void sendToServer(String uid, String room) {
   OLEDDisplay display = *getOLEDDisplay();
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(SERVER_URL);
+    http.begin(SERVER_URL_LIFE_CHECK);
     int httpResponseCode = http.GET();
     if (httpResponseCode>0) {
         Serial.print("HTTP Response code: ");
@@ -57,7 +57,8 @@ void sendToServer(String uid, String room) {
 
       String payload = "{\"rfid_card_id\":\"" + uid + "\",\"room\":\"" + room + "\"}";
       httpResponseCode = http.POST(payload);
-
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
       if (httpResponseCode == 200) {
         String response = http.getString();
 
